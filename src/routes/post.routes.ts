@@ -9,6 +9,7 @@ interface N8nPostResponse {
   platform?: string
   postId?: string
   postUrl?: string
+  imageUrl?: string | null
   postedAt?: string
 }
 
@@ -46,7 +47,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { description } = req.body
+    const { description, platform } = req.body
 
     if (!description || typeof description !== 'string') {
       res.status(400).json({ error: 'description is required and must be a string' })
@@ -56,7 +57,7 @@ router.post('/', async (req: Request, res: Response) => {
     const webhookResponse = await fetch(process.env.N8N_CREATE_POST_WEBHOOK_URL as string, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description })
+      body: JSON.stringify({ description, platform: platform || 'linkedin' })
     })
 
     const data = (await webhookResponse.json()) as N8nPostResponse
@@ -65,7 +66,7 @@ router.post('/', async (req: Request, res: Response) => {
       const post = await Post.create({
         platform: data.platform || 'linkedin',
         description,
-        imageUrl: null,
+        imageUrl: data.imageUrl || null,
         postId: data.postId,
         postUrl: data.postUrl,
         postedAt: data.postedAt ? new Date(data.postedAt) : new Date()
