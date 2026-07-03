@@ -1,8 +1,10 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import express from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
-
-dotenv.config()
+import { connectDB } from './config/db'
+import postRoutes from './routes/post.routes'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -15,8 +17,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`)
+app.use('/api/post', postRoutes)
+
+connectDB().then(() => {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`)
+  })
 })
 
 export default app
