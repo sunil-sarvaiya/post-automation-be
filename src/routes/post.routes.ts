@@ -57,7 +57,7 @@ router.post('/', async (req: Request, res: Response) => {
     const webhookResponse = await fetch(process.env.N8N_CREATE_POST_WEBHOOK_URL as string, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description, platform: platform || 'linkedin' })
+      body: JSON.stringify({ discription: description, platform: platform || 'linkedin' })
     })
 
     const data = (await webhookResponse.json()) as N8nPostResponse

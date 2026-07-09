@@ -5,6 +5,7 @@ import express from 'express'
 import cors from 'cors'
 import { connectDB } from './config/db'
 import postRoutes from './routes/post.routes'
+import scheduledPostRoutes from './routes/scheduledPost.routes'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -18,6 +19,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/post', postRoutes)
+app.use('/api/scheduled-post', scheduledPostRoutes)
 
 connectDB().then(() => {
   app.listen(port, () => {
