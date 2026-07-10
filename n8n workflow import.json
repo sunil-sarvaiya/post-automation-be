@@ -1,0 +1,923 @@
+{
+  "name": "Multi-Platform Social Media Automation (LinkedIn, FB, X, Insta)",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-image-1-mini"
+        },
+        "prompt": "=You are an expert Editorial AI Image Prompt Engineer.\n\nYour task is to create ONE high-quality image generation prompt for an AI image model based on the provided news article.\n\nNews Information\n\nTitle:\n{{ $json.title || \"\" }}\n\nDescription:\n{{ $json.description || \"\" }}\n\nSocial Caption:\n{{ $json.caption || \"\" }}\n\nInstructions\n\nAnalyze the news and determine:\n- Main subject\n- Industry\n- Key event\n- Mood\n- Environment\n- Important visual elements\n\nCreate a single visually compelling editorial scene that represents the news.\n\nThe image should be:\n\n• Editorial style\n• Modern corporate branding\n• Premium quality\n• Highly realistic\n• Cinematic lighting\n• Dynamic composition\n• Professional color grading\n• Rich depth\n• Suitable for LinkedIn, Facebook, Instagram and X\n• 16:9 landscape\n• Clean background\n• High visual impact\n\nAutomatically include industry-specific elements when appropriate:\n\nAI:\nfuturistic interfaces, neural networks, robotics, holographic data, digital intelligence\n\nTechnology:\ncloud computing, servers, cybersecurity, software engineering, innovation\n\nFinance:\nfinancial markets, investment growth, analytics dashboards, business success\n\nHealthcare:\nmedical research, hospitals, laboratories, biotechnology\n\nEnergy:\nrenewable energy, sustainability, solar, wind, smart grids\n\nRetail:\nshopping experience, logistics, commerce\n\nManufacturing:\nindustrial automation, robotics, smart factories\n\nAutomotive:\nmodern vehicles, electric mobility, manufacturing\n\nStrictly avoid:\n\n- Any text\n- Logos\n- Company names\n- Numbers\n- Watermarks\n- UI screenshots\n- Social media icons\n- Cartoon style\n- Blurry images\n- Low quality\n\nReturn ONLY the final image prompt.\n\nDo not explain anything.\n\nDo not use markdown.\n\nThe prompt must end with:\n\nProfessional editorial illustration, ultra realistic, cinematic lighting, premium quality, highly detailed, realistic digital art, clean composition, vibrant professional colors, depth of field, 16:9 landscape, no text, no logo, no watermark.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1936,
+        8304
+      ],
+      "id": "de930671-7764-4643-94fc-446b24dd1d30",
+      "name": "Generate an image2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "scheduled-post",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2064,
+        8416
+      ],
+      "id": "a2f2616c-478b-49ff-afc4-36d3fd5bef7f",
+      "name": "Webhook2",
+      "webhookId": "3488ceb9-a690-4bb8-af69-1b0e4339e899"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the top-5 JSON array returned by the OpenAI node.\n// Try common output field names since exact shape can vary by node version.\nconst response = $input.first().json;\nconst rawText = response.output || response.text || response.content || response.choices?.[0]?.message?.content || JSON.stringify(response);\n\nlet topArticles = [];\ntry {\n  const match = String(rawText).match(/\\[[\\s\\S]*\\]/);\n  topArticles = JSON.parse(match ? match[0] : rawText);\n} catch (e) {\n  console.error('Failed to parse top 5 articles:', e.message, rawText);\n}\n\nif (!Array.isArray(topArticles) || topArticles.length === 0) {\n  const fallback = $('Filter New Articles3').first().json;\n  topArticles = [{\n    rank: 1,\n    title: fallback.title,\n    url: fallback.url,\n    source: fallback.source,\n    description: fallback.description,\n    score: 70,\n    reason: 'Fallback selection — AI parse error'\n  }];\n}\n\nreturn topArticles.map((a) => ({ json: a }));"
+      },
+      "id": "18b9c90c-9b83-4632-a13b-b875d7cb0ef1",
+      "name": "Parse Top ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        8368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1WCT67KM-eHfj4dqwqqhtFxAKjN0PdDr-AYwR1rGzEvs",
+          "mode": "list",
+          "cachedResultName": "post automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WCT67KM-eHfj4dqwqqhtFxAKjN0PdDr-AYwR1rGzEvs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WCT67KM-eHfj4dqwqqhtFxAKjN0PdDr-AYwR1rGzEvs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ $json.url }}",
+            "Title": "={{ $json.title }}",
+            "des": "={{ $json.description }}",
+            "Source": "={{ $json.source }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "des",
+              "displayName": "des",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published At",
+              "displayName": "published At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SourceType",
+              "displayName": "SourceType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1af513f0-dc71-4a4b-a35f-e000aaf48499",
+      "name": "Log Top 5 to Sheet1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1152,
+        8208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GyQh32Mm2IC6RPTy",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst rank1 = items.find(i => i.json.rank === 1) || items[0];\nreturn [{ json: rank1.json }];"
+      },
+      "id": "86fffaca-cc58-49d2-857b-984ddc554723",
+      "name": "Pick Rank ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        8496
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://venturebeat.com/category/ai/feed/",
+        "options": {}
+      },
+      "id": "047090b8-0cb8-4ea9-829b-98a957d5a3fe",
+      "name": "VentureBeat RSS3",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -1792,
+        8416
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.slice(0, 5);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        8416
+      ],
+      "id": "2d16f1e2-b30e-4fb6-88e8-20227b950185",
+      "name": "Code in JavaScript18"
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "id": "243752dd-23e1-48b3-8d94-9897127e77e7",
+      "name": "Merge News Sources3",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -1152,
+        8336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize all news sources into a unified schema and deduplicate by URL\nconst items = $input.all();\nconst seen = new Set();\nconst normalized = [];\n\nfor (const item of items) {\n  const data = item.json;\n  let articles = [];\n\n  if (Array.isArray(data.articles) && data.status === 'ok') {\n    articles = data.articles\n      .filter(a => a.title && a.title !== '[Removed]')\n      .map(a => ({\n        title: a.title,\n        url: a.url,\n        description: a.description || '',\n        publishedAt: a.publishedAt,\n        source: a.source?.name || 'NewsAPI',\n        content: a.content || a.description || '',\n        _sourceType: 'newsapi'\n      }));\n  }\n  else if (Array.isArray(data.articles) && data.totalArticles !== undefined) {\n    articles = data.articles\n      .filter(a => a.title)\n      .map(a => ({\n        title: a.title,\n        url: a.url,\n        description: a.description || '',\n        publishedAt: a.publishedAt,\n        source: a.source?.name || 'GNews',\n        content: a.content || a.description || '',\n        _sourceType: 'gnews'\n      }));\n  }\n  else if (Array.isArray(data.hits)) {\n    articles = data.hits\n      .filter(a => a.title && a.url)\n      .map(a => ({\n        title: a.title,\n        url: a.url || `https://news.ycombinator.com/item?id=${a.objectID}`,\n        description: a.story_text || `${a.points} points on Hacker News`,\n        publishedAt: a.created_at,\n        source: 'Hacker News',\n        content: a.story_text || '',\n        _sourceType: 'hackernews'\n      }));\n  }\n  else if (data.link && data.title) {\n    articles = [{\n      title: data.title,\n      url: data.link,\n      description: data.contentSnippet || data.summary || '',\n      publishedAt: data.isoDate || data.pubDate || new Date().toISOString(),\n      source: data.creator || (data.feedUrl?.includes('techcrunch') ? 'TechCrunch' : 'VentureBeat'),\n      content: data.content || data.contentSnippet || '',\n      _sourceType: 'rss'\n    }];\n  }\n\n  for (const article of articles) {\n    if (article.url && !seen.has(article.url) && article.title) {\n      seen.add(article.url);\n      normalized.push({ json: article });\n    }\n  }\n}\n\nreturn normalized.length > 0\n  ? normalized\n  : [{ json: { _empty: true, title: '', url: '', source: '', description: '', publishedAt: '' } }];"
+      },
+      "id": "8f68f9a5-6cb1-48d6-b629-20da58370414",
+      "name": "Normalize and Deduplicate3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -832,
+        8384
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "18EJM6QL8VjekoB-3Q4xnDuUQJSLep6lH6XUkxP6hrWs",
+          "mode": "list",
+          "cachedResultName": "post automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18EJM6QL8VjekoB-3Q4xnDuUQJSLep6lH6XUkxP6hrWs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18EJM6QL8VjekoB-3Q4xnDuUQJSLep6lH6XUkxP6hrWs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.title }}",
+            "URL": "={{ $json.url }}",
+            "Description": "={{ $json.description }}",
+            "PublishedAt": "={{ $json.publishedAt }}",
+            "Source": "={{ $json.source }}",
+            "Content": "={{ $json.content }}",
+            "SourceType": "={{ $json._sourceType }}",
+            "Fetch Date": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PublishedAt",
+              "displayName": "PublishedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fetch Date",
+              "displayName": "Fetch Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SourceType",
+              "displayName": "SourceType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9180d59c-b6eb-4248-9a7a-4ce18a5f8d2d",
+      "name": "Load Published History3",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -576,
+        8384
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GyQh32Mm2IC6RPTy",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out articles that have already been published (by URL or similar title)\nconst publishedRows = $input.all().map(i => i.json);\nconst newArticles = $('Normalize and Deduplicate3').all().map(i => i.json);\n\nconst publishedUrls = new Set(publishedRows.map(r => r.url || r.URL).filter(Boolean));\nconst publishedTitlesLower = publishedRows\n  .map(r => (r.title || r.Title || '').toLowerCase())\n  .filter(Boolean);\n\nfunction isSimilarTitle(title1, title2) {\n  const words1 = new Set(title1.toLowerCase().split(/\\s+/).filter(w => w.length > 4));\n  const words2 = new Set(title2.toLowerCase().split(/\\s+/).filter(w => w.length > 4));\n  const shared = [...words1].filter(w => words2.has(w));\n  return shared.length >= 3;\n}\n\nconst filtered = newArticles.filter(article => {\n  if (!article.url || !article.title || article._empty) return false;\n  if (publishedUrls.has(article.url)) return false;\n  const tooSimilar = publishedTitlesLower.some(pt => isSimilarTitle(article.title, pt));\n  return !tooSimilar;\n});\n\nconst result = filtered.map(a => ({ json: { ...a, hasArticles: true } }));\nreturn result.length > 0 ? result : [{ json: { hasArticles: false, _empty: true } }];"
+      },
+      "id": "da5e7872-c17d-4cc4-87a3-57ecf7affbff",
+      "name": "Filter New Articles3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        8384
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-has-articles",
+              "leftValue": "={{$json.hasArticles}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "rightType": "boolean"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c9985b49-a11f-488f-bf49-b1e78b4fc06b",
+      "name": "Has New Articles?3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        8384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all new articles and pass them as a single JSON array to the AI for scoring\nconst articles = $input.all().map((item, idx) => ({\n  index: idx,\n  title: item.json.title,\n  url: item.json.url,\n  source: item.json.source,\n  description: item.json.description,\n  publishedAt: item.json.publishedAt\n}));\n\nreturn [{ json: { articlesJson: JSON.stringify(articles, null, 2) } }];"
+      },
+      "id": "831021ae-b15c-4393-a682-e8a7a4393699",
+      "name": "Prepare Articles for Scoring3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        8368
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are an expert News Analyst and Content Curator for a LinkedIn audience interested in AI, technology, startups, and business.\n\nAnalyze the provided array of news articles and select the TOP 5 most important, relevant, and engaging news stories for a professional LinkedIn audience.\n\nSelection Criteria (highest priority first):\n1. AI, technology, startup, or business significance\n2. Virality and engagement potential on LinkedIn\n3. Credibility of the source\n4. Uniqueness of the news (avoid duplicates/near-duplicates)\n5. Completeness of the article information\n\nIgnore: politics, entertainment, sports, crime, celebrity news, promotional/sponsored content, low-quality or incomplete articles.\n\nArticles:\n{{ $json.Title }}\n{{ $json.Content }}\n{{ $json.Description }}\n\nRespond ONLY with a valid JSON array of exactly 5 objects in this exact format (no markdown, no extra text):\n[\n  { \"rank\": 1, \"title\": \"\", \"url\": \"\", \"source\": \"\", \"description\": \"\", \"score\": 95, \"reason\": \"\" },\n  { \"rank\": 2, \"title\": \"\", \"url\": \"\", \"source\": \"\", \"description\": \"\", \"score\": 90, \"reason\": \"\" }\n]\n\nRules:\n- rank 1 = best article, rank 5 = weakest of the selected five.\n- Score must be between 1 and 100.\n- Do not modify the title, URL, source, or description from the original data.\n- Return only valid JSON, no markdown code fences."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        464,
+        8368
+      ],
+      "id": "995f46c2-f235-4d8b-9227-15d364ce224e",
+      "name": "Message a model5",
+      "credentials": {
+        "openAiApi": {
+          "id": "mJul9XDsjqyk05zq",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\n\nconst title = a.title || '';\nconst description = (a.description || '').slice(0, 1500);\nconst url = a.url || '';\nconst source = (a.source || '').replace(/^[^(]*\\(([^)]+)\\)$/, '$1').trim();\nconst score = a.score;\n\nconst linkedinPrompt = `You are a senior social media copywriter who writes high-engagement LinkedIn posts for a tech/business audience.\n\nWrite ONE LinkedIn post based strictly on the article details below. Do not invent facts not present in the summary.\n\nARTICLE TITLE: ${title}\nSOURCE: ${source}\nSUMMARY: ${description}\nLINK: ${url}\n\nRules for the post:\n- Start with a scroll-stopping hook line (max 12 words), no emojis in the hook.\n- Body: 120-180 words, written in a confident, insightful, first-person analyst voice (\"I've been watching...\", \"Here's what stood out to me...\").\n- Pull out 2-4 concrete facts/numbers from the summary as bullet points using '→' as the bullet marker.\n- Explain in 1-2 sentences why this matters for professionals in tech/marketing/business (the 'so what').\n- End with one open-ended question to the reader to drive comments.\n- On a new line after the question, add 'Read more: ${url}'.\n- On a final new line, add 5-6 relevant hashtags (no spaces inside tags, mix of broad + niche).\n- No emojis except optionally 1 in the hook line. No corporate fluff or generic phrases like 'game-changer' or 'in today's fast-paced world'.\n\nAlso write a companion image generation prompt: a single descriptive line (30-50 words) for an editorial-style illustration representing the article's core idea, minimalist, no text/logos/faces, suitable for a 16:9 LinkedIn header image.\n\nReturn STRICTLY as JSON with no markdown formatting: {\"linkedin\": \"...\", \"imagePrompt\": \"...\"}`;\n\nreturn [{\n  json: {\n    title,\n    description,\n    url,\n    source,\n    score,\n    linkedinPrompt\n  }\n}];"
+      },
+      "id": "7fd2a9f9-a88e-4d64-8ee3-9efb33ca371c",
+      "name": "Build LinkedIn Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        8496
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "prompt": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "={{ $json.linkedinPrompt }}"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "9de65dc8-e4b4-43a0-9fd0-4ffa75f98cb0",
+      "name": "Generate LinkedIn Post",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        8496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "mJul9XDsjqyk05zq",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst content = raw.message?.content || raw.choices?.[0]?.message?.content || raw.content || '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  parsed = { linkedin: content, imagePrompt: '' };\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "288deb1e-3072-4e95-9480-61e839ca3803",
+      "name": "Parse LLM Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        8496
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-image-1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-IMAGE-1-MINI"
+        },
+        "prompt": "=\n={{\n`Create a premium editorial-quality social media post image based on the following news.\n\nNews Context:\n${$json.imagePrompt}\n\nDesign Requirements:\n- Create a modern, professional LinkedIn, Facebook, and Twitter/X style post.\n- The design should look like it was created by a professional marketing agency.\n- Use realistic, high-quality visuals that accurately represent the news.\n- Include a clean, premium layout with a strong visual hierarchy.\n- Add one short, bold headline (3–8 words) related to the news, positioned naturally within the design.\n- The headline should be large, modern, and highly readable.\n- Use elegant typography with high contrast.\n- Add subtle graphic elements such as gradients, abstract shapes, glowing effects, or geometric accents to enhance the composition.\n- Include realistic backgrounds and objects that match the news topic.\n- Use cinematic lighting, vibrant colors, and professional composition.\n- Maintain a clean corporate aesthetic suitable for business audiences.\n- Landscape aspect ratio (16:9).\n- Ultra HD, 4K quality.\n- Highly detailed, photorealistic, editorial style.\n\nContent Rules:\n- The image must visually explain the news.\n- Automatically determine the correct industry (Technology, AI, Healthcare, Finance, Business, Automotive, Energy, Cybersecurity, Manufacturing, Space, etc.).\n- If the news is about a company, represent its industry and products without using the company's official logo.\n- If the news is about AI or technology, include futuristic interfaces, data visualization, cloud computing, servers, neural networks, or digital innovation.\n- If the news is about finance or business, include stock market visuals, corporate offices, executives, investment themes, or financial growth.\n\nAvoid:\n- No watermarks.\n- No logos.\n- No social media icons.\n- No fake website screenshots.\n- No excessive text.\n- No blurry elements.\n- No cartoon style.\n- No low-quality graphics.\n- No copyright-protected branding.\n\nGenerate a visually stunning, viral-quality social media graphic suitable for LinkedIn, Facebook, and Twitter/X.`\n}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        2176,
+        8496
+      ],
+      "id": "6b1acd88-526b-4cc4-986d-913db2ff64bc",
+      "name": "Generate an image12",
+      "credentials": {
+        "openAiApi": {
+          "id": "mJul9XDsjqyk05zq",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfor (const item of items) {\n  const buffer = await this.helpers.getBinaryDataBuffer(item, 'data');\n  const mimeType = item.binary.data.mimeType || 'image/png';\n\n  item.json.image = `data:${mimeType};base64,${buffer.toString('base64')}`;\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        8400
+      ],
+      "id": "a55644ab-b9c8-4581-b2d5-96d68c43845f",
+      "name": "Code in JavaScript30",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nconst linkedinCaption = $('Parse LLM Output').first().json.linkedin || '';\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const binaryData = item.binary && item.binary.data;\n\n  if (!binaryData) {\n    throw new Error(`No binary property \"data\" found on item ${i}`);\n  }\n\n  const buffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n  const mimeType = binaryData.mimeType || 'image/png';\n  const base64 = buffer.toString('base64');\n\n  item.json.imageBase64 = base64;\n  item.json.title = $('Build LinkedIn Prompt').first().json.title;\n  item.json.description = $('Build LinkedIn Prompt').first().json.description || '';\n  item.json.source = $('Build LinkedIn Prompt').first().json.source || '';\n  item.json.url = $('Build LinkedIn Prompt').first().json.url || '';\n  item.json.caption = linkedinCaption;\n  item.json.generatedAt = new Date();\n  item.json.imageDataUrl = `data:${mimeType};base64,${base64}`;\n\n  results.push(item);\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        8640
+      ],
+      "id": "fbd92c24-3d1d-4895-8aca-d42b3ee7f43c",
+      "name": "Convert Image To Base64"
+    }
+  ],
+  "pinData": {
+    "Load Published History3": [
+      {
+        "json": {
+          "Title": "Mantra Health Expands Policy Efforts with Newly Appointed Head of Government Relationships Maria Jose (MJ) Norero",
+          "URL": "https://www.prnewswire.com/news-releases/mantra-health-expands-policy-efforts-with-newly-appointed-head-of-government-relationships-maria-jose-mj-norero-302819794.html",
+          "Description": "NEW YORK, July 7, 2026 /PRNewswire/ -- Mantra Health, the digital mental health provider built exclusively to support student well-being and success across higher education, today announced the appointment of Maria Jose (MJ) Norero as Head of Government Relat…",
+          "PublishedAt": "2026-07-07T17:38:00Z",
+          "Source": "PRNewswire",
+          "Content": "NEW YORK, July 7, 2026 /PRNewswire/ -- Mantra Health, the digital mental health provider built exclusively to support student well-being and success across higher education, today announced the appoi… [+4678 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "6.2m Nigerians face hunger in 2026, child rights organisation warns",
+          "URL": "https://punchng.com/6-2m-nigerians-face-hunger-in-2026-child-rights-organisation-warns/",
+          "Description": "Save the Children International warns 36.2 million Nigerians face hunger in 2026 lean season due to conflict, climate shocks, and rising food prices. Urgen\n\nRead More: https://punchng.com/6-2m-nigerians-face-hunger-in-2026-child-rights-organisation-warns/",
+          "PublishedAt": "2026-07-07T17:07:13Z",
+          "Source": "The Punch",
+          "Content": "About 36.2 million Nigerians across 26 states and the Federal Capital Territory are expected to face acute food and nutrition insecurity during the ongoing 2026 lean season, Save the Children Interna… [+4530 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Micron gives Wall Street reason to rethink AI winners",
+          "URL": "https://www.thestreet.com/investing/micron-gives-wall-street-reason-to-rethink-ai-winners",
+          "Description": "Micron Technology (MU) just issued a different kind of artificial intelligence caution to investors. The dismal earnings picture isn't the problem. It is not...",
+          "PublishedAt": "2026-07-07T17:07:00Z",
+          "Source": "TheStreet",
+          "Content": "Micron Technology (MU) just issued a different kind of artificial intelligence caution to investors.\r\nThe dismal earnings picture isn't the problem. It is not because demand is collapsing. It does no… [+11356 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Tesla launches startup challenge to scale Giga Berlin battery cells",
+          "URL": "http://electrek.co/2026/07/07/tesla-giga-berlin-cell-giga-challenge/",
+          "Description": "Tesla is opening the doors of its Gigafactory Berlin-Brandenburg to outside startups through a new “Cell Giga Challenge,” inviting them to pilot technologies inside its live battery cell production line.\nThe program comes as Tesla ramps 4680 cell output at Gr…",
+          "PublishedAt": "2026-07-07T16:58:57Z",
+          "Source": "Electrek",
+          "Content": "Tesla is opening the doors of its Gigafactory Berlin-Brandenburg to outside startups through a new Cell Giga Challenge, inviting them to pilot technologies inside its live battery cell production lin… [+4594 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "CerraCap Ventures Invests in MazeBolt to Advance AI-Era DDoS Resilience",
+          "URL": "https://www.prnewswire.com/news-releases/cerracap-ventures-invests-in-mazebolt-to-advance-ai-era-ddos-resilience-302819701.html",
+          "Description": "Investment underscores CERRACAP 's cybersecurity thesis around continuous validation, enterprise resilience, and mission-critical infrastructure protection. COSTA MESA, Calif. and RAMAT GAN, Israel, July 7, 2026 /PRNewswire/ -- CERRACAP, a global venture capi…",
+          "PublishedAt": "2026-07-07T15:48:00Z",
+          "Source": "PRNewswire",
+          "Content": "Investment underscores CERRACAP 's cybersecurity thesis around continuous validation, enterprise resilience, and mission-critical infrastructure protection.\r\nCOSTA MESA, Calif. and RAMAT GAN, Israel,… [+5860 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "NScale Lands $900 Million Credit Facility for Global AI Infrastructure Push",
+          "URL": "https://www.pymnts.com/news/artificial-intelligence/2026/nscale-lands-900-million-credit-facility-for-global-ai-infrastructure-push/",
+          "Description": "Nscale, a full-stack artificial intelligence cloud platform, has closed a $900 million revolving credit facility to accelerate its AI data center build-out and capital deployment across the United States, Europe and the Asia-Pacific region. The facility was s…",
+          "PublishedAt": "2026-07-07T15:46:53Z",
+          "Source": "pymnts.com",
+          "Content": "Nscale, a full-stack artificial intelligence cloud platform, has closed a $900 million revolving credit facility to accelerate its AI data center build-out and capital deployment across the United St… [+2128 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Buy these quality, low-stress stocks for the summer, says Jefferies",
+          "URL": "https://www.cnbc.com/2026/07/07/buy-these-quality-low-stress-stocks-for-the-summer-says-jefferies.html",
+          "Description": "This summer, Jefferies recommends focusing on some high-quality stocks that have been left behind by the AI momentum trade.",
+          "PublishedAt": "2026-07-07T15:45:33Z",
+          "Source": "CNBC",
+          "Content": "Jefferies recommends owning quality, low-stress stocks to ride out the summer as markets become more volatile amid increased concerns tied to investment in artificial intelligence.\r\nAI-related questi… [+2908 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Record capital goods imports help to sharply widen US trade deficit in May",
+          "URL": "https://biztoc.com/x/4e9346d21a06ddc4",
+          "Description": "By Lucia Mutikani\nWASHINGTON, July 7 (Reuters) - The U.S. trade deficit widened sharply in May as an artificial intelligence investment boom helped to drive imports of capital goods to a record high, suggesting that trade remained a drag on gross domestic pro…",
+          "PublishedAt": "2026-07-07T15:40:47Z",
+          "Source": "Biztoc.com",
+          "Content": "By Lucia MutikaniWASHINGTON, July 7 (Reuters) - The U.S. trade deficit widened sharply in May as an artificial intelligence investment boom helped to drive imports of capital goods to a record high, … [+140 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Your 401(k) could be at risk if the AI bubble bursts: Treasury report",
+          "URL": "https://nypost.com/2026/07/07/business/your-401k-could-be-at-risk-if-the-ai-bubble-bursts-treasury-report/",
+          "Description": "AI companies have become so deeply embedded in financial markets that a sharp downturn would ripple far beyond Silicon Valley, according to a report.",
+          "PublishedAt": "2026-07-07T15:37:22Z",
+          "Source": "New York Post",
+          "Content": "A draft Treasury Department report is warning that an artificial intelligence bubble could put millions of Americans retirement savings at risk if the industry goes through a major downturn — even as… [+4416 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Meta Stock Slips After Zuckerberg Admits AI Progress Has Been Slower Than Expected",
+          "URL": "https://biztoc.com/x/d911a8b3f71a6924",
+          "Description": "Artificial intelligence has been the leading story of Meta Platforms (META), with Meta receiving praise (and critique) from the market for allocating up to $145 billion in capital expenditures to invest in building AI infrastructure. That story received new f…",
+          "PublishedAt": "2026-07-07T15:07:37Z",
+          "Source": "Biztoc.com",
+          "Content": "Artificial intelligence has been the leading story of Meta Platforms (META), with Meta receiving praise (and critique) from the market for allocating up to $145 billion in capital expenditures to inv… [+147 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Governance must evolve with AI, but accountability cannot be outsourced: SEBI official",
+          "URL": "https://www.thehindubusinessline.com/markets/governance-must-evolve-with-ai-but-accountability-cannot-be-outsourced-sebi-official/article71194010.ece",
+          "Description": "SEBI emphasizes evolving corporate governance with AI, asserting that accountability remains a human responsibility, not technology's.",
+          "PublishedAt": "2026-07-07T14:58:32Z",
+          "Source": "BusinessLine",
+          "Content": "Corporate governance must keep pace with the rapid adoption of artificial intelligence and emerging technologies, but companies cannot shift responsibility for decisions to machines, a senior SEBI of… [+2935 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Amazon aims to raise $25 billion from bond sale, Bloomberg News reports",
+          "URL": "https://economictimes.indiatimes.com/markets/stocks/news/amazon-aims-to-raise-25-billion-from-bond-sale-bloomberg-news-reports/articleshow/132242087.cms",
+          "Description": "Amazon is set to secure a minimum of twenty-five billion dollars through a U.S. bond initiative. This strategic decision is aimed at bolstering the company's burgeoning investments in artificial intelligence infrastructure. As the tech landscape evolves, majo…",
+          "PublishedAt": "2026-07-07T14:54:52Z",
+          "Source": "The Times of India",
+          "Content": "Amazon. com is looking to raise at least $25 billion through a U.S. dollar bond sale, Bloomberg News reported on Tuesday, in the company's latest push to fund its hefty AI investments.Tech companies … [+1633 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      },
+      {
+        "json": {
+          "Title": "Former MeitY Secretary feels India’s AI strategy can be different from fearing job losses",
+          "URL": "https://www.thehindubusinessline.com/info-tech/beyond-job-loss-fears-why-indias-ai-strategy-can-be-different/article71194252.ece",
+          "Description": "Former MeitY Secretary advocates for a unique Indian AI strategy focused on transformation, not job loss fears.",
+          "PublishedAt": "2026-07-07T14:54:18Z",
+          "Source": "BusinessLine",
+          "Content": "Rentala Chandrashekhar, former Secretary of the Ministry of Electronics and Information Technology, has said Indias approach to artificial intelligence can be significantly different from the Western… [+1992 chars]",
+          "SourceType": "newsapi",
+          "Fetch Date": "2026-07-08 23:49:58"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook2": {
+      "main": [
+        [
+          {
+            "node": "VentureBeat RSS3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Top ": {
+      "main": [
+        [
+          {
+            "node": "Log Top 5 to Sheet1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pick Rank ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Rank ": {
+      "main": [
+        [
+          {
+            "node": "Build LinkedIn Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VentureBeat RSS3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript18",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript18": {
+      "main": [
+        [
+          {
+            "node": "Merge News Sources3",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge News Sources3": {
+      "main": [
+        [
+          {
+            "node": "Normalize and Deduplicate3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize and Deduplicate3": {
+      "main": [
+        [
+          {
+            "node": "Load Published History3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Published History3": {
+      "main": [
+        [
+          {
+            "node": "Filter New Articles3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter New Articles3": {
+      "main": [
+        [
+          {
+            "node": "Has New Articles?3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Articles?3": {
+      "main": [
+        [
+          {
+            "node": "Prepare Articles for Scoring3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Articles for Scoring3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Articles for Scoring3": {
+      "main": [
+        [
+          {
+            "node": "Message a model5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model5": {
+      "main": [
+        [
+          {
+            "node": "Parse Top ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build LinkedIn Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate LinkedIn Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Output": {
+      "main": [
+        [
+          {
+            "node": "Generate an image12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image12": {
+      "main": [
+        [
+          {
+            "node": "Convert Image To Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate LinkedIn Post": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2449bdfb-2b11-40a1-8b1f-4553063c6d96",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f55564ff5eab0e330a46c572f1d0a2bd3a7f9f69e7410c035842fa6b7972bcf9"
+  },
+  "nodeGroups": [],
+  "id": "0nTs02sF5GBZibYO",
+  "tags": []
+}

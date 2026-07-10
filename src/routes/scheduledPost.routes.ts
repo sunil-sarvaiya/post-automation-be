@@ -3,23 +3,21 @@ import ScheduledPost from '../models/ScheduledPost'
 
 const router = Router()
 
-interface N8nBinaryFile {
-  mimeType?: string
-  data?: string
-}
-
-interface N8nGeneratePostResponse {
-  social_caption?: string
-  hashtags?: string[]
-  image_prompt?: string
-  generated_at?: string
-  binary?: {
-    image?: N8nBinaryFile
-  }
+interface N8nScheduledPostResponse {
+  title?: string
+  description?: string
+  source?: string
+  url?: string
+  caption?: string
+  imageDataUrl?: string
+  imageBase64?: string
+  generatedAt?: string
 }
 
 router.get('/', async (req: Request, res: Response) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 10)
     const { platform, status } = req.query
 
     const filter: Record<string, unknown> = {}
@@ -30,8 +28,21 @@ router.get('/', async (req: Request, res: Response) => {
       filter.status = status
     }
 
-    const scheduledPosts = await ScheduledPost.find(filter).sort({ scheduledAt: 1 })
-    res.status(200).json(scheduledPosts)
+    const [scheduledPosts, total] = await Promise.all([
+      ScheduledPost.find(filter)
+        .sort({ scheduledAt: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      ScheduledPost.countDocuments(filter)
+    ])
+
+    res.status(200).json({
+      posts: scheduledPosts,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    })
   } catch (error) {
     console.error('Fetching scheduled posts from DB failed:', error)
     res.status(500).json({ error: 'Failed to fetch scheduled posts' })
@@ -40,12 +51,12 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
-    const allowedFields = ['title', 'description', 'hashtags', 'imagePrompt', 'platform', 'imageUrl', 'scheduledAt', 'status']
+    const allowedFields = ['title', 'description', 'hashtags', 'imagePrompt', 'platform', 'imageUrl', 'scheduledAt', 'status', 'publishedAt', 'postId', 'postUrl']
     const updates: Record<string, unknown> = {}
 
     for (const field of allowedFields) {
       if (field in req.body) {
-        updates[field] = field === 'scheduledAt' ? new Date(req.body[field]) : req.body[field]
+        updates[field] = field === 'scheduledAt' || field === 'publishedAt' ? new Date(req.body[field]) : req.body[field]
       }
     }
 
@@ -81,7 +92,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { platform, scheduledAt, title } = req.body || {}
+    const { platform, scheduledAt } = req.body || {}
 
     const webhookResponse = await fetch(process.env.N8N_SCHEDULED_POST_WEBHOOK_URL as string, {
       method: 'POST',
@@ -89,32 +100,21 @@ router.post('/', async (req: Request, res: Response) => {
       body: JSON.stringify({})
     })
 
-    const data = (await webhookResponse.json()) as N8nGeneratePostResponse
+    const data = (await webhookResponse.json()) as N8nScheduledPostResponse
 
-    if (!webhookResponse.ok || !data.social_caption) {
+    if (!webhookResponse.ok || !data.caption) {
       res.status(webhookResponse.status || 502).json({ error: 'Failed to generate scheduled post content', details: data })
       return
     }
 
-    const imageFile = data.binary?.image
-    let imageUrl: string | null = null
-
-    if (imageFile?.data && imageFile.data !== 'filesystem-v2') {
-      imageUrl = `data:${imageFile.mimeType || 'image/png'};base64,${imageFile.data}`
-    } else if (imageFile?.data === 'filesystem-v2') {
-      console.warn('Scheduled post webhook returned a filesystem binary reference instead of base64 data; image was not stored')
-    }
-
     const scheduledPost = await ScheduledPost.create({
-      title: title || '',
-      description: data.social_caption,
-      hashtags: data.hashtags || [],
-      imagePrompt: data.image_prompt || null,
+      title: data.title || '',
+      description: data.caption,
+      imageUrl: data.imageDataUrl || null,
       platform: platform || 'linkedin',
-      imageUrl,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(),
       status: 'Draft',
-      generatedAt: data.generated_at ? new Date(data.generated_at) : new Date()
+      generatedAt: data.generatedAt ? new Date(data.generatedAt) : new Date()
     })
 
     res.status(201).json(scheduledPost)
