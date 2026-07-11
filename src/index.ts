@@ -7,6 +7,7 @@ import mongoose from 'mongoose'
 import { connectDB } from './config/db'
 import postRoutes from './routes/post.routes'
 import scheduledPostRoutes from './routes/scheduledPost.routes'
+import { postScheduler } from './services/postScheduler.service'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -17,6 +18,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+app.get('/api/scheduler/jobs', (_req, res) => {
+  res.json({ jobs: postScheduler.getActiveJobs() })
 })
 
 app.use('/api/post', postRoutes)
@@ -44,6 +49,7 @@ async function ensureCollections(): Promise<void> {
 
 connectDB().then(async () => {
   await ensureCollections()
+  await postScheduler.loadPendingPosts()
   app.listen(port, () => {
     console.log(`Server running on port ${port}`)
   })

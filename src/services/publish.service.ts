@@ -39,10 +39,23 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
       signal: AbortSignal.timeout(PUBLISH_WEBHOOK_TIMEOUT_MS)
     })
 
-    const data = (await webhookResponse.json()) as N8nPostResponse
+    const rawText = await webhookResponse.text()
+    console.log(`[PublishService] Webhook raw response (status ${webhookResponse.status}):`, rawText.substring(0, 2000))
 
-    if (webhookResponse.status >= 200 && webhookResponse.status < 300 && data.success && data.results) {
-      return { success: true, data }
+    let data: N8nPostResponse
+    try {
+      data = JSON.parse(rawText) as N8nPostResponse
+    } catch {
+      return {
+        success: false,
+        error: `Webhook returned non-JSON response (status ${webhookResponse.status}): ${rawText.substring(0, 500)}`
+      }
+    }
+
+    if (webhookResponse.status >= 200 && webhookResponse.status < 300) {
+      if (data.success !== false) {
+        return { success: true, data }
+      }
     }
 
     return {

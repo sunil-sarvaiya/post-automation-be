@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import ScheduledPost from '../models/ScheduledPost'
+import { postScheduler } from '../services/postScheduler.service'
 
 const router = Router()
 
@@ -51,7 +52,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
-    const allowedFields = ['title', 'description', 'hashtags', 'imagePrompt', 'platform', 'imageUrl', 'scheduledAt', 'status', 'publishedAt', 'postId', 'postUrl']
+    const allowedFields = ['title', 'description', 'hashtags', 'imagePrompt', 'platform', 'imageUrl', 'scheduledAt', 'status', 'publishedAt', 'postId', 'postUrl', 'approvedAt']
     const updates: Record<string, unknown> = {}
 
     for (const field of allowedFields) {
@@ -65,6 +66,10 @@ router.patch('/:id', async (req: Request, res: Response) => {
     if (!scheduledPost) {
       res.status(404).json({ error: 'Scheduled post not found' })
       return
+    }
+
+    if (updates['status'] === 'Approved' && updates['scheduledAt']) {
+      postScheduler.schedulePost(scheduledPost.id, new Date(updates['scheduledAt'] as string))
     }
 
     res.status(200).json(scheduledPost)
@@ -82,6 +87,8 @@ router.delete('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'Scheduled post not found' })
       return
     }
+
+    postScheduler.cancelPost(req.params.id as string)
 
     res.status(204).send()
   } catch (error) {

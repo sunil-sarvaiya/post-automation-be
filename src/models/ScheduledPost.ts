@@ -17,6 +17,7 @@ export interface IScheduledPost extends Document {
   errorMessage: string | null
   retryCount: number
   generatedAt: Date | null
+  approvedAt: Date | null
 }
 
 const scheduledPostSchema = new Schema<IScheduledPost>({
@@ -35,7 +36,8 @@ const scheduledPostSchema = new Schema<IScheduledPost>({
   postUrl: { type: String, default: null },
   errorMessage: { type: String, default: null },
   retryCount: { type: Number, default: 0 },
-  generatedAt: { type: Date, default: null }
+  generatedAt: { type: Date, default: null },
+  approvedAt: { type: Date, default: null }
 })
 
 export default mongoose.model<IScheduledPost>('ScheduledPost', scheduledPostSchema)
