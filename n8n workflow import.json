@@ -677,47 +677,121 @@
       ],
       "id": "576662e0-e955-493d-a9db-7bcc94c89e55",
       "name": "Decode Image for LinkedIn1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json.body;\n\nconst title = a.title || '';\nconst description = (a.description || '').slice(0, 1500);\nconst url = a.url || '';\nconst source = (a.source || '').replace(/^[^(]*\\(([^)]+)\\)$/, '$1').trim();\nconst score = a?.score;\n\nconst linkedinPrompt = `You are a senior social media copywriter who writes high-engagement LinkedIn posts for a tech/business audience.\n\nWrite ONE LinkedIn post based strictly on the article details below. Do not invent facts not present in the summary.\n\nARTICLE TITLE: ${title}\nSOURCE: ${source}\nSUMMARY: ${description}\nLINK: ${url}\n\nRules for the post:\n- Start with a scroll-stopping hook line (max 12 words), no emojis in the hook.\n- Body: 120-180 words, written in a confident, insightful, first-person analyst voice (\"I've been watching...\", \"Here's what stood out to me...\").\n- Pull out 2-4 concrete facts/numbers from the summary as bullet points using '→' as the bullet marker.\n- Explain in 1-2 sentences why this matters for professionals in tech/marketing/business (the 'so what').\n- End with one open-ended question to the reader to drive comments.\n- On a new line after the question, add 'Read more: ${url}'.\n- On a final new line, add 5-6 relevant hashtags (no spaces inside tags, mix of broad + niche).\n- No emojis except optionally 1 in the hook line. No corporate fluff or generic phrases like 'game-changer' or 'in today's fast-paced world'.\n\nAlso write a companion image generation prompt: a single descriptive line (30-50 words) for an editorial-style illustration representing the article's core idea, minimalist, no text/logos/faces, suitable for a 16:9 LinkedIn header image.\n\nReturn STRICTLY as JSON with no markdown formatting: {\"linkedin\": \"...\", \"imagePrompt\": \"...\"}`;\n\nreturn [{\n  json: {\n    title,\n    description,\n    url,\n    source,\n    score,\n    linkedinPrompt\n  }\n}];"
+      },
+      "id": "446e282e-2e90-4e6e-a399-0b7f3b0149f2",
+      "name": "Build LinkedIn Prompt1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        11776
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "prompt": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "={{ $json.linkedinPrompt }}"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "fd37b4f7-d332-4ba0-9775-eabcf13b0691",
+      "name": "Generate LinkedIn Post1",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        11776
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "mJul9XDsjqyk05zq",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst content = raw.message?.content || raw.choices?.[0]?.message?.content || raw.content || '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  parsed = { linkedin: content, imagePrompt: '' };\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "1dd3719c-f9e8-4b1c-abf3-4e6f60045c66",
+      "name": "Parse LLM Output1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        11776
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-image-2-2026-04-21",
+          "mode": "list",
+          "cachedResultName": "GPT-IMAGE-2-2026-04-21"
+        },
+        "prompt": "=\n={{\n`Create a premium editorial-quality social media post image based on the following news.\n\nNews Context:\n${$json.imagePrompt}\n\nDesign Requirements:\n- Create a modern, professional LinkedIn, Facebook, and Twitter/X style post.\n- The design should look like it was created by a professional marketing agency.\n- Use realistic, high-quality visuals that accurately represent the news.\n- Include a clean, premium layout with a strong visual hierarchy.\n- Add one short, bold headline (3–8 words) related to the news, positioned naturally within the design.\n- The headline should be large, modern, and highly readable.\n- Use elegant typography with high contrast.\n- Add subtle graphic elements such as gradients, abstract shapes, glowing effects, or geometric accents to enhance the composition.\n- Include realistic backgrounds and objects that match the news topic.\n- Use cinematic lighting, vibrant colors, and professional composition.\n- Maintain a clean corporate aesthetic suitable for business audiences.\n- Landscape aspect ratio (16:9).\n- Ultra HD, 4K quality.\n- Highly detailed, photorealistic, editorial style.\n\nContent Rules:\n- The image must visually explain the news.\n- Automatically determine the correct industry (Technology, AI, Healthcare, Finance, Business, Automotive, Energy, Cybersecurity, Manufacturing, Space, etc.).\n- If the news is about a company, represent its industry and products without using the company's official logo.\n- If the news is about AI or technology, include futuristic interfaces, data visualization, cloud computing, servers, neural networks, or digital innovation.\n- If the news is about finance or business, include stock market visuals, corporate offices, executives, investment themes, or financial growth.\n\nAvoid:\n- No watermarks.\n- No logos.\n- No social media icons.\n- No fake website screenshots.\n- No excessive text.\n- No blurry elements.\n- No cartoon style.\n- No low-quality graphics.\n- No copyright-protected branding.\n\nGenerate a visually stunning, viral-quality social media graphic suitable for LinkedIn, Facebook, and Twitter/X.`\n}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        11776
+      ],
+      "id": "e22ff4ef-f8b6-4124-9311-9755d6cada77",
+      "name": "Generate an image13",
+      "credentials": {
+        "openAiApi": {
+          "id": "mJul9XDsjqyk05zq",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nconst linkedinCaption =$('Build LinkedIn Prompt1').first().json.linkedinPrompt ;\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const binaryData = item.binary && item.binary.data;\n\n  if (!binaryData) {\n    throw new Error(`No binary property \"data\" found on item ${i}`);\n  }\n\n  const buffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n  const mimeType = binaryData.mimeType || 'image/png';\n  const base64 = buffer.toString('base64');\n\n  item.json.imageBase64 = base64;\n  item.json.title = $('Build LinkedIn Prompt1').first().json.title || '';\n  \n  item.json.description = $('Build LinkedIn Prompt1').first().json.description || '';\n  \n  item.json.source =$('Build LinkedIn Prompt1').first().json.source || '';\n  \n  item.json.url =  $('Build LinkedIn Prompt1').first().json.url || '';\n  \n  item.json.caption =$('Build LinkedIn Prompt1').first().json.title ;\n  item.json.generatedAt = new Date();\n  item.json.imageDataUrl = `data:${mimeType};base64,${base64}`;\n\n  results.push(item);\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        11776
+      ],
+      "id": "4eb041d2-dfb3-4d44-b564-b65c40f7f1c7",
+      "name": "Convert Image To Base"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "manual-post",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        11776
+      ],
+      "id": "97695f56-8130-4e98-b98e-a013e8edfbae",
+      "name": "Webhook8",
+      "webhookId": "e7f7d05b-ca34-483e-9565-dde49d7b16e0"
     }
   ],
   "pinData": {
-    "Webhook2": [
-      {
-        "json": {
-          "headers": {
-            "host": "postautomation123.app.n8n.cloud",
-            "user-agent": "node",
-            "content-length": "2",
-            "accept": "*/*",
-            "accept-encoding": "gzip, br",
-            "accept-language": "*",
-            "cdn-loop": "cloudflare; loops=1; subreqs=1",
-            "cf-connecting-ip": "2401:4900:511d:ef88:e507:ee03:ca72:fd",
-            "cf-ew-via": "15",
-            "cf-ipcountry": "IN",
-            "cf-ray": "a189762868ae9f61-MAA",
-            "cf-visitor": "{\"scheme\":\"https\"}",
-            "cf-worker": "n8n.cloud",
-            "content-type": "application/json",
-            "sec-fetch-mode": "cors",
-            "x-forwarded-for": "2401:4900:511d:ef88:e507:ee03:ca72:fd, 162.158.55.95",
-            "x-forwarded-host": "postautomation123.app.n8n.cloud",
-            "x-forwarded-port": "443",
-            "x-forwarded-proto": "https",
-            "x-forwarded-server": "traefik-prod-users-swc-3-79bb64946-s95q7",
-            "x-is-trusted": "yes",
-            "x-real-ip": "2401:4900:511d:ef88:e507:ee03:ca72:fd"
-          },
-          "params": {},
-          "query": {},
-          "body": {},
-          "webhookUrl": "https://postautomation123.app.n8n.cloud/webhook/scheduled-post",
-          "executionMode": "production"
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ],
     "Webhook": [
       {
         "json": {
@@ -1015,6 +1089,61 @@
           }
         ]
       ]
+    },
+    "Build LinkedIn Prompt1": {
+      "main": [
+        [
+          {
+            "node": "Generate LinkedIn Post1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate LinkedIn Post1": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Output1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Output1": {
+      "main": [
+        [
+          {
+            "node": "Generate an image13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image13": {
+      "main": [
+        [
+          {
+            "node": "Convert Image To Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook8": {
+      "main": [
+        [
+          {
+            "node": "Build LinkedIn Prompt1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1023,7 +1152,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "c1a7270f-28e7-4af8-bf9d-78e251bf721b",
+  "versionId": "447c11df-b192-4ec3-8f2e-d97ac39e13c4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f55564ff5eab0e330a46c572f1d0a2bd3a7f9f69e7410c035842fa6b7972bcf9"

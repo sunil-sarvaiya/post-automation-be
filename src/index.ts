@@ -8,6 +8,7 @@ import { connectDB } from './config/db'
 import postRoutes from './routes/post.routes'
 import scheduledPostRoutes from './routes/scheduledPost.routes'
 import { postScheduler } from './services/postScheduler.service'
+import ScheduledPost from './models/ScheduledPost'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -50,6 +51,23 @@ app.post('/api/manual-post', async (req, res) => {
     try { data = JSON.parse(rawText) } catch { data = { raw: rawText } }
 
     console.log(`[ManualPost] Webhook response (status ${webhookResponse.status}):`, rawText.substring(0, 1000))
+
+    if (webhookResponse.ok) {
+      try {
+        await ScheduledPost.create({
+          title: data.title || title || '',
+          description: data.caption || data.description || description || '',
+          imageUrl: data.imageDataUrl || null,
+          platform: 'linkedin',
+          scheduledAt: new Date(),
+          status: 'Draft',
+          generatedAt: data.generatedAt ? new Date(data.generatedAt) : new Date()
+        })
+        console.log('[ManualPost] Saved to ScheduledPost collection')
+      } catch (dbErr) {
+        console.error('[ManualPost] Failed to save to DB:', dbErr)
+      }
+    }
 
     res.status(webhookResponse.status).json(data)
   } catch (error) {
